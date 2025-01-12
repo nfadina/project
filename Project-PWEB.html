@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Pemesanan Hotel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        let rooms = [
+            { type: "Standar", price: 300000 },
+            { type: "Deluxe", price: 500000 },
+            { type: "Family", price: 700000 }
+        ];
+
+        let facilities = ["Kolam Renang", "Restoran", "Gym"];
+        let bookings = [];
+
+        function showSection(role) {
+            document.getElementById('selection').style.display = 'none';
+            if (role === 'admin') {
+                document.getElementById('admin-login').style.display = 'block';
+            } else {
+                document.getElementById('customer-section').style.display = 'block';
+                displayCustomerData();
+            }
+        }
+
+        function adminLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            if (username === 'admin' && password === 'password') {
+                document.getElementById('admin-login').style.display = 'none';
+                document.getElementById('admin-section').style.display = 'block';
+                displayAdminData();
+            } else {
+                alert('Username atau password salah!');
+            }
+        }
+
+        function displayAdminData() {
+            const roomTable = document.getElementById('room-table-body');
+            roomTable.innerHTML = '';
+            rooms.forEach((room, index) => {
+                roomTable.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${room.type}</td>
+                        <td>Rp ${room.price.toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="editRoom(${index})">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteRoom(${index})">Hapus</button>
+                        </td>
+                    </tr>`;
+            });
+
+            const facilityList = document.getElementById('facility-list');
+            facilityList.innerHTML = '';
+            facilities.forEach((facility, index) => {
+                facilityList.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between">
+                        ${facility}
+                        <button class="btn btn-danger btn-sm" onclick="deleteFacility(${index})">Hapus</button>
+                    </li>`;
+            });
+
+            const bookingTable = document.getElementById('booking-table-body');
+            bookingTable.innerHTML = '';
+            bookings.forEach((booking, index) => {
+                bookingTable.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${booking.name}</td>
+                        <td>${booking.roomType}</td>
+                        <td>${booking.duration} Hari</td>
+                        <td>Rp ${booking.total.toLocaleString()}</td>
+                    </tr>`;
+            });
+        }
+
+        function addRoom(event) {
+            event.preventDefault();
+            const roomType = document.getElementById('roomType').value;
+            const roomPrice = parseInt(document.getElementById('roomPrice').value);
+            rooms.push({ type: roomType, price: roomPrice });
+            displayAdminData();
+        }
+
+        function editRoom(index) {
+            const newType = prompt('Masukkan tipe kamar baru:', rooms[index].type);
+            const newPrice = parseInt(prompt('Masukkan harga baru:', rooms[index].price));
+            if (newType && newPrice) {
+                rooms[index] = { type: newType, price: newPrice };
+                displayAdminData();
+            }
+        }
+
+        function deleteRoom(index) {
+            rooms.splice(index, 1);
+            displayAdminData();
+        }
+
+        function addFacility(event) {
+            event.preventDefault();
+            const facility = document.getElementById('facility').value;
+            facilities.push(facility);
+            displayAdminData();
+        }
+
+        function deleteFacility(index) {
+            facilities.splice(index, 1);
+            displayAdminData();
+        }
+
+        function displayCustomerData() {
+            const roomList = document.getElementById('roomList');
+            roomList.innerHTML = '';
+            rooms.forEach(room => {
+                roomList.innerHTML += `<li class="list-group-item">${room.type} - Rp ${room.price.toLocaleString()}/malam</li>`;
+            });
+
+            const facilityList = document.getElementById('customerFacilityList');
+            facilityList.innerHTML = '';
+            facilities.forEach(facility => {
+                facilityList.innerHTML += `<li class="list-group-item">${facility}</li>`;
+            });
+
+            const roomTypeSelect = document.getElementById('roomTypeSelect');
+            roomTypeSelect.innerHTML = '<option value="">Pilih Tipe Kamar</option>';
+            rooms.forEach(room => {
+                roomTypeSelect.innerHTML += `<option value="${room.type}">${room.type}</option>`;
+            });
+        }
+
+        function addBooking(event) {
+            event.preventDefault();
+            const name = document.getElementById('customerName').value;
+            const roomType = document.getElementById('roomTypeSelect').value;
+            const duration = parseInt(document.getElementById('stayDuration').value);
+
+            const room = rooms.find(room => room.type === roomType);
+            const total = room.price * duration;
+
+            bookings.push({ name, roomType, duration, total });
+            alert('Pemesanan berhasil!');
+            displayAdminData();
+        }
+
+        function calculateTotal() {
+            const selectedRoom = rooms.find(room => room.type === document.getElementById('roomTypeSelect').value);
+            const duration = parseInt(document.getElementById('stayDuration').value) || 0;
+            const breakfast = document.getElementById('includeBreakfast').checked ? 50000 : 0;
+
+            if (selectedRoom && duration > 0) {
+                const total = (selectedRoom.price + breakfast) * duration;
+                document.getElementById('totalPayment').value = `Rp ${total.toLocaleString()}`;
+            } else {
+                document.getElementById('totalPayment').value = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('roomTypeSelect').addEventListener('change', calculateTotal);
+            document.getElementById('stayDuration').addEventListener('input', calculateTotal);
+            document.getElementById('includeBreakfast').addEventListener('change', calculateTotal);
+        });
+    </script>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center">Sistem Pemesanan Hotel</h1>
+
+        <!-- Role Selection -->
+        <div id="selection">
+            <h3>Pilih Peran Anda</h3>
+            <button class="btn btn-primary" onclick="showSection('admin')">Masuk sebagai Admin</button>
+            <button class="btn btn-secondary" onclick="showSection('customer')">Masuk sebagai Pelanggan</button>
+        </div>
+
+        <!-- Admin Login -->
+        <div id="admin-login" style="display: none;">
+            <h3>Login Admin</h3>
+            <form onsubmit="adminLogin(event)">
+                <div class="mb-3">
+                    <label for="adminUsername" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="adminUsername" required>
+                </div>
+                <div class="mb-3">
+                    <label for="adminPassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="adminPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </div>
+
+        <!-- Admin Section -->
+        <div id="admin-section" style="display: none;">
+            <h3>Admin Panel</h3>
+
+            <!-- Kelola Jenis Kamar -->
+            <h4>Kelola Jenis Kamar</h4>
+            <form onsubmit="addRoom(event)">
+                <div class="mb-3">
+                    <label for="roomType" class="form-label">Tipe Kamar</label>
+                    <input type="text" class="form-control" id="roomType" required>
+                </div>
+                <div class="mb-3">
+                    <label for="roomPrice" class="form-label">Harga Per Malam</label>
+                    <input type="number" class="form-control" id="roomPrice" required>
+                </div>
+                <button type="submit" class="btn btn-success">Tambah</button>
+            </form>
+
+            <table class="table table-bordered mt-4">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Tipe Kamar</th>
+                        <th>Harga</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="room-table-body"></tbody>
+            </table>
+
+            <!-- Kelola Fasilitas -->
+            <h4 class="mt-4">Kelola Fasilitas</h4>
+            <form onsubmit="addFacility(event)">
+                <div class="mb-3">
+                    <label for="facility" class="form-label">Nama Fasilitas</label>
+                    <input type="text" class="form-control" id="facility" required>
+                </div>
+                <button type="submit" class="btn btn-success">Tambah</button>
+            </form>
+
+            <ul class="list-group mt-3" id="facility-list"></ul>
+
+            <!-- Data Pemesanan Konsumen -->
+            <h4 class="mt-4">Data Pemesanan</h4>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Pemesan</th>
+                        <th>Tipe Kamar</th>
+                        <th>Durasi</th>
+                        <th>Total Bayar</th>
+                    </tr>
+                </thead>
+                <tbody id="booking-table-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Customer Section -->
+        <div id="customer-section" style="display: none;">
+            <h3>Informasi Hotel</h3>
+
+            <!-- Jenis Kamar -->
+            <h4>Jenis Kamar</h4>
+            <ul class="list-group" id="roomList"></ul>
+
+            <!-- Fasilitas -->
+            <h4 class="mt-4">Fasilitas Hotel</h4>
+            <ul class="list-group" id="customerFacilityList"></ul>
+
+            <!-- Form Pemesanan -->
+            <h4 class="mt-4">Pemesanan Kamar</h4>
+            <form onsubmit="addBooking(event)">
+                <div class="mb-3">
+                    <label for="customerName" class="form-label">Nama Pemesan</label>
+                    <input type="text" class="form-control" id="customerName" required>
+                </div>
+                <div class="mb-3">
+                    <label for="roomTypeSelect" class="form-label">Tipe Kamar</label>
+                    <select class="form-select" id="roomTypeSelect" required></select>
+                </div>
+                <div class="mb-3">
+                    <label for="roomPrice" class="form-label">Harga</label>
+                    <input type="text" class="form-control" id="roomPrice" disabled>
+                </div>
+                <div class="mb-3">
+                    <label for="stayDuration" class="form-label">Durasi Menginap (Hari)</label>
+                    <input type="number" class="form-control" id="stayDuration" required>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="includeBreakfast">
+                    <label for="includeBreakfast" class="form-check-label">Termasuk Breakfast</label>
+                </div>
+                <div class="mb-3">
+                    <label for="totalPayment" class="form-label">Total Bayar</label>
+                    <input type="text" class="form-control" id="totalPayment" disabled>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                    <button type="reset" class="btn btn-warning">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
